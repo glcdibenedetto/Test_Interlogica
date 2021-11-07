@@ -1,0 +1,17 @@
+Eseguendo il file Test_Di_Benedetto.sql:
+- viene creato un nuovo database con le tabelle previste
+- vengono importati i dati dal file csv di test contenuto nella cartella Input nelle rispettive tabelle
+- viene creata la tabelle AUTOCOINVOLTE_HISTORY che contiene lo storico delle variazioni dell'importo dei danni nella tabella AUTOCOINVOLTE
+
+La sezione relativa alle query è inserita all'interno di un commento. È possibile eseguire singolarmente le query per reperire i dati richiesti.
+
+A causa di incompatibilità tra le versioni di SQL Server e del DB OLE non è stato possibile testare l'esportazione in Excel dei dati. Per visualizzare
+i dati da esportare, oltre al risultato della query 9, è possibile eseguire il comando SELECT * FROM TO EXP; per visualizzare le informazioni relative
+alla rivalutazione dei veicoli.
+
+Le indicazioni in merito ai deadlock sono state inserite sotto forma di commento nel file sql.
+
+Parti non implementate:
+
+- spostamento del file csv dalla cartella input alla cartella processed e rinomina del file una volta effettuata l'importazione
+- salvataggio dei dati in file excel "dinamici" denominati con date e orari
