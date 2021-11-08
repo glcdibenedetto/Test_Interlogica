@@ -1,7 +1,7 @@
 Eseguendo il file Test_Di_Benedetto.sql:
 - viene creato un nuovo database con le tabelle previste
 - vengono importati i dati dal file csv di test contenuto nella cartella Input nelle rispettive tabelle
-- il file Dati.csv nella cartella input viene spostato nella cartella Processed e rinominato in Dati_Importati.csv
+- il file Dati.csv nella cartella input viene spostato nella cartella Processed (da creare) e rinominato in Dati_Importati.csv
 - vengono eseguiti i calcoli relativi alla valutazione ed effettuata l'esportazione in un csv nella cartella Processed. L'excel contiene, nella
   prima colonna il risultato della query 9 e nelle colonne (e righe) successive i dati relativi alla rivalutazione
 - viene creata la tabelle AUTOCOINVOLTE_HISTORY che contiene lo storico delle variazioni dell'importo dei danni nella tabella AUTOCOINVOLTE
