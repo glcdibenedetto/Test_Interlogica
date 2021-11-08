@@ -190,6 +190,7 @@ WHERE SINISTRI.CodS NOT IN (SELECT SINISTRI.cods
                             JOIN AUTOCOINVOLTE ON SINISTRI.CodS = AUTOCOINVOLTE.CodS
                             JOIN AUTO ON AUTOCOINVOLTE.Targa = AUTO.Targa
                             WHERE AUTO.Cilindrata < 2000);
+*/
 
 --per auto coinvolte in sinistri prima del 20/01/2021 con proprietario residente in una citta diversa dalla sede dell'assicurazione rivalutare il danno del 10%
 
@@ -209,40 +210,16 @@ AND PROPRIETARI.Residenza <> ASSICURAZIONI.Sede;
 
 -- per le auto coinvolte in sinistri mostrare targa, proprietario e per ogni sinistro dire se c'è stata rivalutazione e di quanto
 
-CREATE TABLE TO_EXP(
-Targa VARCHAR(255),
+CREATE TABLE TO_EXP( --creo una tabella in cui inserire i record da importare in excel
+Targa1 varchar(255),
+Targa2 VARCHAR(255),
 CodF VARCHAR(255),
 CodS varchar(255),
 Rivalutazione VARCHAR(5),
 ImportoDelDanno DECIMAL
 )
 
-INSERT INTO TO_EXP (Targa, CodF, CodS, ImportoDelDanno) (
-SELECT AUTO.Targa, PROPRIETARI.CodF, AUTOCOINVOLTE.CodS, (AUTOCOINVOLTE.ImportoDelDanno - AUTOCOINV_ORIG.ImportoDelDanno)
-FROM AUTO
-JOIN PROPRIETARI ON PROPRIETARI.CodF = AUTO.CodF 
-JOIN AUTOCOINVOLTE ON AUTO.Targa = AUTOCOINVOLTE.Targa
-JOIN AUTOCOINV_ORIG ON AUTOCOINVOLTE.Targa = AUTOCOINV_ORIG.Targa AND AUTOCOINVOLTE.CodS = AUTOCOINV_ORIG.CodS);
-
-UPDATE TO_EXP SET TO_EXP.Rivalutazione = CASE
-WHEN TO_EXP.ImportoDelDanno > 0 THEN 'Yes'
-WHEN TO_EXP.ImportoDelDanno = 0 THEN 'No'
-END;
-
-EXEC master.dbo.sp_MSset_oledb_prop N'Microsoft.Jet.OLEDB.4.0', N'AllowInProcess', 1
-GO 
-EXEC master.dbo.sp_MSset_oledb_prop N'Microsoft.Jet.OLEDB.4.0', N'DynamicParameters', 1
-GO 
-sp_configure 'show advanced options', 1;  
-RECONFIGURE;
-GO 
-sp_configure 'Ad Hoc Distributed Queries', 1;  
-RECONFIGURE;  
-GO
---Salvataggio in excel della query 9
-INSERT INTO OPENROWSET(
-'Microsoft.Jet.OLEDB.4.0',
-'Database=percorso_locale\Test\processed\Export.xlsx;','select * from [FOGLIO1$]') --da inserire il percorso in cui viene salvata la cartella Test
+INSERT INTO TO_EXP(Targa1) --inserisco il risultato della query 9
 SELECT AUTO.Targa
 FROM AUTO
 WHERE AUTO.Targa NOT IN (SELECT AUTO.targa
@@ -251,12 +228,29 @@ WHERE AUTO.Targa NOT IN (SELECT AUTO.targa
                          JOIN SINISTRI ON SINISTRI.CodS = AUTOCOINVOLTE.CodS
                          WHERE SINISTRI.Data > '2021-01-20');
 
---Salvataggio in excel di proprietari, targhe auto coinvolte in sinistri con rivalutazione si/no e importo rivalutato
-INSERT INTO OPENROWSET(
-'Microsoft.Jet.OLEDB.4.0',
-'Database=percorso_locale\Test\processed\Export.xlsx;','select * from [FOGLIO2$]')--da inserire il percorso in cui viene salvata la cartella Test
-SELECT * FROM TO_EXP;
-*/
+INSERT INTO TO_EXP (Targa2, CodF, CodS, ImportoDelDanno) --aggiungo le auto coinvolte in sinistri e calcolo la rivalutazione
+SELECT AUTO.Targa, PROPRIETARI.CodF, AUTOCOINVOLTE.CodS, (AUTOCOINVOLTE.ImportoDelDanno - AUTOCOINV_ORIG.ImportoDelDanno)
+FROM AUTO
+JOIN PROPRIETARI ON PROPRIETARI.CodF = AUTO.CodF 
+JOIN AUTOCOINVOLTE ON AUTO.Targa = AUTOCOINVOLTE.Targa
+JOIN AUTOCOINV_ORIG ON AUTOCOINVOLTE.Targa = AUTOCOINV_ORIG.Targa AND AUTOCOINVOLTE.CodS = AUTOCOINV_ORIG.CodS;
+
+UPDATE TO_EXP SET TO_EXP.Rivalutazione = CASE --aggiungo una colonna per dire se c'è stata rivalutazione
+WHEN TO_EXP.ImportoDelDanno > 0 THEN 'Yes'
+WHEN TO_EXP.ImportoDelDanno = 0 THEN 'No'
+END;
+
+declare @date varchar (30) --calcolo della data
+select @date = convert(varchar, getdate(),112) + replace(convert(varchar, getdate(),108),':','')
+
+declare @dir varchar (255)
+select @dir = 'percorso_locale\Test\processed\EXPORT_' + @date + '.csv' --da inserire il percorso in cui viene salvata la cartella Test
+
+declare @cmd varchar (300) --export excel della tabella TO_EXP
+select @cmd = 'BCP DB_TEST_DIBENEDETTO..TO_EXP out ' + @dir + ' -c -t; -T' --occorrono i percorsi per scivere all'interno della directory
+
+EXEC xp_cmdshell @cmd
+
 
 -- Creare una tabella in cui storicizzare la variazione dell'importo di ogni veicolo
 CREATE TABLE AUTOCOINVOLTE_HISTORY(
