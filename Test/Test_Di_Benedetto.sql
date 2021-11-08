@@ -80,6 +80,12 @@ BULK INSERT BULK_TABLE --inserimento dei dati nella tabella
     ROWTERMINATOR = '\n'
     );
 
+EXEC sp_configure 'xp_cmdshell', 1; --aggiunta del permesso per l'utilizzo del comando 
+GO
+RECONFIGURE
+EXEC xp_cmdshell 'move percorso_locale\Test\input\Dati.csv percorso_locale\Test\processed\Dati_importati.csv', NO_OUTPUT; --occorrono i permessi per accesso e scrittura della cartella Test e delle sottodirectory
+GO --spostamento e rinomina del file csv contenente i dati input (da inserire nella riga sopra il percorso in cui viene salvata la cartella Test
+
 --trasferimento dei dati dalla tabella di import alle singole tabelle
 
 INSERT INTO PROPRIETARI(CodF, Nome, Residenza) 
@@ -119,7 +125,7 @@ FROM AUTO
 JOIN PROPRIETARI ON PROPRIETARI.CodF = AUTO.CodF
 WHERE Cilindrata > 2000 OR Potenza > 120;
 
---3) Targa e Nome del proprietario delle Auto di cilindrata superiore a 2000 cc oppure di potenza superiore a 120 CV, assicurate presso la “SARA”
+--3) Targa e Nome del proprietario delle Auto di cilindrata superiore a 2000 cc oppure di potenza superiore a 120 CV, assicurate presso la â€œSARAâ€
 SELECT AUTO.Targa, PROPRIETARI.Nome
 FROM AUTO
 JOIN PROPRIETARI ON PROPRIETARI.CodF = AUTO.CodF
@@ -127,7 +133,7 @@ JOIN ASSICURAZIONI ON ASSICURAZIONI.CodAss = AUTO.CodAss
 WHERE (Cilindrata > 2000 OR Potenza > 120)
 AND ASSICURAZIONI.Nome = 'SARA';
 
---4) Targa e Nome del proprietario delle Auto assicurate presso la “SARA” e coinvolte in sinistri il 20/01/02
+--4) Targa e Nome del proprietario delle Auto assicurate presso la â€œSARAâ€ e coinvolte in sinistri il 20/01/02
 SELECT AUTO.Targa, PROPRIETARI.Nome
 FROM AUTO
 JOIN PROPRIETARI ON PROPRIETARI.CodF = AUTO.CodF
@@ -143,7 +149,7 @@ FROM ASSICURAZIONI
 JOIN AUTO ON ASSICURAZIONI.CodAss = AUTO.CodAss
 GROUP BY ASSICURAZIONI.Nome,ASSICURAZIONI.Sede;
 
---6) Per ciascuna auto “Fiat”, la targa dell’auto ed il numero di sinistri in cui è stata coinvolta
+--6) Per ciascuna auto â€œFiatâ€, la targa dellâ€™auto ed il numero di sinistri in cui Ã¨ stata coinvolta
 SELECT AUTO.Targa, COUNT(SINISTRI.CodS) AS NumeroSinistri
 FROM AUTO
 JOIN AUTOCOINVOLTE ON AUTO.Targa = AUTOCOINVOLTE.Targa
@@ -151,7 +157,7 @@ JOIN SINISTRI ON SINISTRI.CodS = AUTOCOINVOLTE.CodS
 WHERE AUTO.Marca = 'FIAT'
 GROUP BY AUTO.Targa;
 
---7) Per ciascuna auto coinvolta in più di un sinistro, la targa dell’auto, il nome dell’Assicurazione, ed il totale dei danni riportati
+--7) Per ciascuna auto coinvolta in piÃ¹ di un sinistro, la targa dellâ€™auto, il nome dellâ€™Assicurazione, ed il totale dei danni riportati
 SELECT AUTO.Targa, ASSICURAZIONI.Nome, SUM(AUTOCOINVOLTE.ImportoDelDanno) AS TotaleDanni
 FROM AUTO
 JOIN AUTOCOINVOLTE ON AUTO.Targa = AUTOCOINVOLTE.Targa
@@ -160,7 +166,7 @@ JOIN ASSICURAZIONI ON ASSICURAZIONI.CodAss = AUTO.CodAss
 GROUP BY AUTO.Targa, ASSICURAZIONI.Nome
 HAVING COUNT(SINISTRI.CodS)>1;
 
---8) CodF e Nome di coloro che possiedono più di un’auto
+--8) CodF e Nome di coloro che possiedono piÃ¹ di unâ€™auto
 SELECT PROPRIETARI.CodF, PROPRIETARI.Nome
 FROM PROPRIETARI
 JOIN AUTO ON PROPRIETARI.CodF = AUTO.CodF
@@ -201,7 +207,7 @@ JOIN PROPRIETARI ON PROPRIETARI.CodF = AUTO.CodF
 WHERE SINISTRI.Data < '2021-01-20'
 AND PROPRIETARI.Residenza <> ASSICURAZIONI.Sede;
 
--- per le auto coinvolte in sinistri mostrare targa, proprietario e per ogni sinistro dire se c'è stata rivalutazione e di quanto
+-- per le auto coinvolte in sinistri mostrare targa, proprietario e per ogni sinistro dire se c'Ã¨ stata rivalutazione e di quanto
 
 CREATE TABLE TO_EXP(
 Targa VARCHAR(255),
@@ -274,16 +280,16 @@ END
 END;
 
 
-/*Per ridurre i tempi di consultazione della tabella AUTO e, di conseguenza, ridurre il rischio di deadlock, è possibile indicizzare alcune
-colonne della tabella (la chiave primaria è indicizzata automaticamente), preferibilmente quelle più frequenti all'interno delle clausole
+/*Per ridurre i tempi di consultazione della tabella AUTO e, di conseguenza, ridurre il rischio di deadlock, Ã¨ possibile indicizzare alcune
+colonne della tabella (la chiave primaria Ã¨ indicizzata automaticamente), preferibilmente quelle piÃ¹ frequenti all'interno delle clausole
 WHERE e quelle su cui vengono eseguite le azioni di JOIN (le chiavi esterne), tramite il comando CREATE INDEX indice_auto ON AUTO(colonna);
 */
 
-/* per prevenire deadlock è opportuno mantenere brevi le transazioni (usando anche gli indici e altri strumenti di query optimizer),
+/* per prevenire deadlock Ã¨ opportuno mantenere brevi le transazioni (usando anche gli indici e altri strumenti di query optimizer),
 usare il NOLOCK per dati che vengono modificati poco frequentemente, ridurre il numero di letture, settare opportunamente la deadlock priority
 */
 
-/*per capire quale tabella sia in lock è possibile lanciare la query
+/*per capire quale tabella sia in lock Ã¨ possibile lanciare la query
 select parts.object_id from sys.dm_tran_locks locks join sys.partitions parts on locks.resource_associated_entity_id = parts.hobt_id;
-da cui si ottiene l'id della tabella, per ottenere il nome è necessario lanciare select object_name(id_ottenuto)
+da cui si ottiene l'id della tabella, per ottenere il nome Ã¨ necessario lanciare select object_name(id_ottenuto)
 */
