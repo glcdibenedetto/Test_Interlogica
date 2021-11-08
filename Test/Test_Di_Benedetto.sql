@@ -274,8 +274,9 @@ END
 END;
 
 
-/*Per ridurre i tempi di consultazione della tabella AUTO e, di conseguenza, ridurre il rischio di deadlock, è possibile indicizzare la
-tabella tramite il comando CREATE INDEX indice_auto ON AUTO(Targa);
+/*Per ridurre i tempi di consultazione della tabella AUTO e, di conseguenza, ridurre il rischio di deadlock, è possibile indicizzare alcune
+colonne della tabella (la chiave primaria è indicizzata automaticamente), preferibilmente quelle più frequenti all'interno delle clausole
+WHERE e quelle su cui vengono eseguite le azioni di JOIN (le chiavi esterne), tramite il comando CREATE INDEX indice_auto ON AUTO(colonna);
 */
 
 /* per prevenire deadlock è opportuno mantenere brevi le transazioni (usando anche gli indici e altri strumenti di query optimizer),
