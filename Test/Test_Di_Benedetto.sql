@@ -247,7 +247,7 @@ declare @dir varchar (255)
 select @dir = 'percorso_locale\Test\processed\EXPORT_' + @date + '.csv' --da inserire il percorso in cui viene salvata la cartella Test
 
 declare @cmd varchar (300) --export excel della tabella TO_EXP
-select @cmd = 'BCP DB_TEST_DIBENEDETTO..TO_EXP out ' + @dir + ' -c -t; -T' --occorrono i percorsi per scivere all'interno della directory
+select @cmd = 'BCP DB_TEST_DIBENEDETTO..TO_EXP out ' + @dir + ' -c -t; -T' --occorrono i permessi per scivere all'interno della directory
 
 EXEC xp_cmdshell @cmd
 
